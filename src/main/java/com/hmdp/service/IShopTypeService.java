@@ -19,4 +19,6 @@ public interface IShopTypeService extends IService<ShopType> {
     //List<ShopType> queryTypeList();//我自己写的有问题
 
     Result queryShopTypeList();
+
+    Result queryShopTypeString();
 }

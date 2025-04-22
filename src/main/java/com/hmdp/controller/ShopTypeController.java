@@ -28,6 +28,7 @@ public class ShopTypeController {
     @GetMapping("list")
     public Result queryTypeList() {
         /**
+         * 直接查询mysql
          * 通过mybatis-plus实现的mysql查询
          */
         List<ShopType> typeList = typeService
@@ -35,12 +36,19 @@ public class ShopTypeController {
         return Result.ok(typeList);
 
         /**
+         * 添加redis缓存  list
          * 现在需要对这个店铺类型添加redis缓存,添加的时候选择key——list的数据结构
          */
         //Result result = typeService.queryShopTypeList();
         //return Result.ok(result);
 
 
+        /**
+         * 添加redis缓存
+         * 将查询到的店铺类型List保存在为String类型的redis中
+         */
+        /*Result result = typeService.queryShopTypeString();
+        return Result.ok(result);*/
 
     }
 }

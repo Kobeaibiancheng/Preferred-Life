@@ -1,5 +1,6 @@
 package com.hmdp.service.impl;
 
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.hmdp.dto.Result;
 import com.hmdp.entity.Shop;
@@ -138,5 +139,38 @@ public class ShopTypeServiceImpl extends ServiceImpl<ShopTypeMapper, ShopType> i
             stringRedisTemplate.opsForList().rightPushAll(RedisConstants.CACHE_SHOP_TYPE_KEY, JSONUtil.toJsonStr(shopType));
         }
         return Result.ok(shopTypes);*/
+    }
+
+    @Override
+    public Result queryShopTypeString() {
+        //1.从redis中查询店铺类型缓存
+        String shopTypeJson = stringRedisTemplate.opsForValue().get(RedisConstants.CACHE_SHOP_TYPE_KEY);
+        // 2.判断 Redis 中是否存在数据
+        if (StrUtil.isNotBlank(shopTypeJson)) {
+            // 2.1.存在，则返回
+            List<ShopType> shopTypes = JSONUtil.toList(shopTypeJson, ShopType.class);
+            return Result.ok(shopTypes);
+        }
+        /*if (shopTypeJson != null && !shopTypeJson.isEmpty()) {
+            //2.存在，直接返回
+            List<ShopType> shopTypes = JSONUtil.toList(shopTypeJson, ShopType.class);
+            return Result.ok(shopTypes);
+        }*/
+
+
+
+        //3.不存在，从mysql中查询
+        List<ShopType> shopTypes = typeService
+                .query().orderByAsc("sort").list();
+
+        //4.判断mysql中是否有数据
+        //5.不存在，直接返回
+        if (shopTypes == null || shopTypes.isEmpty()) {
+            return Result.fail("分类不存在！");
+        }
+        //6.存在，保存到redis中，并且放回查询到的结果
+        String shopTypesJson = JSONUtil.toJsonStr(shopTypes);
+        stringRedisTemplate.opsForValue().set(RedisConstants.CACHE_SHOP_TYPE_KEY,shopTypesJson);
+        return Result.ok(shopTypes);
     }
 }
