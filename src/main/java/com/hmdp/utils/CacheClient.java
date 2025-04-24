@@ -54,11 +54,11 @@ public class CacheClient {
             return JSONUtil.toBean(json, type);
         }
 
-        //判断命中的是否是空值
+        /*//判断命中的是否是空值
         if (json != null) {
             //返回一个错误信息
             return null;
-        }
+        }*/
 
 
         //4.redis不存在,根据id查数据库
