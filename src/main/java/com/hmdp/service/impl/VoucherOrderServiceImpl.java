@@ -55,11 +55,9 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
         }
 
         Long userId = UserHolder.getUser().getId();
-        synchronized(userId.toString().intern()){
-            //获取代理对象（事务）
-            IVoucherOrderService proxy = (IVoucherOrderService)AopContext.currentProxy();
-            return proxy.createVoucherOrder(voucherId);
-        }
+
+        return createVoucherOrder(voucherId);
+
     }
 
 
