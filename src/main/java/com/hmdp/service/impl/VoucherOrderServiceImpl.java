@@ -66,12 +66,25 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
 
 
         Long userId = UserHolder.getUser().getId();
-        //创建redis分布式锁对象
-        //SimpleRedisLock lock = new SimpleRedisLock(stringRedisTemplate, "order" + userId);
 
+
+        /**
+         * 基于redis自己实现的分布式锁
+         */
+        //创建redis分布式锁对象
+        /*SimpleRedisLock lock = new SimpleRedisLock(stringRedisTemplate, "order" + userId);
+        boolean tryLock = lock.tryLock(5l);*/
+
+
+        /**
+         * redisson的分布式锁
+         */
         //创建redisson对象
-        RLock lock = redissonClient.getLock("order" + userId);
+        RLock lock = redissonClient.getLock("lock:order" + userId);
         boolean tryLock = lock.tryLock();
+
+        
+
         //判断锁是否获取成功
         if(!tryLock){
             //获取锁失败，不成功怎么办
