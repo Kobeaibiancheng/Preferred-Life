@@ -1,21 +1,28 @@
 package com.hmdp.service.impl;
 
-import cn.hutool.core.util.BooleanUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.hmdp.dto.Result;
+import com.hmdp.dto.UserDTO;
 import com.hmdp.entity.Blog;
 import com.hmdp.entity.User;
 import com.hmdp.mapper.BlogMapper;
 import com.hmdp.service.IBlogService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.hmdp.service.IUserService;
+import com.hmdp.utils.RedisConstants;
 import com.hmdp.utils.SystemConstants;
 import com.hmdp.utils.UserHolder;
+import org.springframework.beans.BeanUtils;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -57,7 +64,6 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements IB
     }
 
 
-
     @Override
     public Result queryHotBlog(Integer current) {
         // 根据用户查询
@@ -83,9 +89,16 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements IB
      * @param blog
      */
     private void isBlogLiked(Blog blog) {
+        
+        //有可能没有登陆
+        UserDTO userDTO = UserHolder.getUser();
+        if (userDTO == null){
+            //用户没有登录就不用查询点赞
+            return;
+        }
         //获取当前登录用户
         Long userId = UserHolder.getUser().getId();
-        String key = "blog:liked" + blog.getId();
+        String key = RedisConstants.BLOG_LIKED_KEY + blog.getId();
         //1.判断当前用户是否已经点赞
         Double score = stringRedisTemplate.opsForZSet().score(key, userId.toString());
         if (score != null) {
@@ -108,7 +121,7 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements IB
     public Result likeBlog(Long id) {
         //获取当前登录用户
         Long userId = UserHolder.getUser().getId();
-        String key = "blog:liked" + id;
+        String key = RedisConstants.BLOG_LIKED_KEY + id;
         //1.判断当前用户是否已经点赞
         //Boolean isMember = stringRedisTemplate.opsForSet().isMember(key, userId.toString());
 
@@ -135,5 +148,40 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements IB
             }
         }
         return Result.ok();
+    }
+
+    @Override
+    public Result queryBlogLikes(Long id) {
+        //获取redis中当前店铺的key
+        String key = RedisConstants.BLOG_LIKED_KEY + id;
+        //1.查询top5的点赞用户  zrange key 0 4   这查出来的是用户id和score 因为当时存的就是这个
+        Set<String> top5Id = stringRedisTemplate.opsForZSet().range(key, 0, 4);
+
+        if (top5Id == null || top5Id.isEmpty()){
+            return Result.ok(Collections.emptyList());
+        }
+
+        //2.解析查询出来的额用户id
+        List<Long> ids = top5Id.stream().map(Long::valueOf).collect(Collectors.toList());
+        //3.再根据用户id去查询用户的部分信息（用来显示在前端的）
+
+        String idStr = StrUtil.join(",", ids);
+
+        List<User> users = userService.query()
+                .in("id",ids).last("ORDER BY FIELD(id,"+ idStr + ")")
+                .list();
+
+        //List<User> users = userService.listByIds(ids);
+
+        List<UserDTO> userDTOS = new ArrayList<>();
+        for (User user: users){
+            UserDTO userDTO = new UserDTO();
+            BeanUtils.copyProperties(user, userDTO);
+            userDTOS.add(userDTO);
+        }
+
+
+        //4.然后再返回
+        return Result.ok(userDTOS);
     }
 }
