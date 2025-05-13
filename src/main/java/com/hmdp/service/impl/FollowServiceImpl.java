@@ -49,10 +49,12 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
             }
         }else{
             //如果是取关，就删除数据  delete from tb_follow where user_id = ? and follow_user_id = ?
-            remove(new QueryWrapper<Follow>()
+            boolean isSuccess = remove(new QueryWrapper<Follow>()
                     .eq("follow_user_id", followUserId).eq("user_id", userId));
             //把用户关注的id从set集合中移除
-            stringRedisTemplate.opsForSet().remove(key,followUserId.toString());
+            if(isSuccess){
+                stringRedisTemplate.opsForSet().remove(key,followUserId.toString());
+            }
         }
 
         return Result.ok();
