@@ -1,17 +1,24 @@
 package com.hmdp.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.hmdp.dto.Result;
+import com.hmdp.dto.UserDTO;
 import com.hmdp.entity.Follow;
 import com.hmdp.mapper.FollowMapper;
 import com.hmdp.service.IFollowService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.hmdp.service.IUserService;
 import com.hmdp.utils.UserHolder;
 import jdk.nashorn.internal.ir.CallNode;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -26,6 +33,9 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
 
     @Resource
     private StringRedisTemplate stringRedisTemplate;
+
+    @Resource
+    private IUserService userService;
 
 
 
@@ -71,4 +81,31 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
         //大于0  代表关注了
         return Result.ok(count > 0);
     }
+
+    @Override
+    public Result followCommons(Long id) {
+
+        //求目标用户和当前用户的共同关注交集
+        //1.获取当前用户的id，找到该用户的关注set
+        Long userId = UserHolder.getUser().getId();
+        String key = "follows:" + userId;
+        //2.获取目标用户的关注set
+        String aidKey = "follows:" + id;
+        //3.求两个set的交集
+        Set<String> commonFollow = stringRedisTemplate.opsForSet().intersect(key, aidKey);
+        if (commonFollow == null || commonFollow.isEmpty()){
+            return Result.ok(Collections.emptyList());
+        }
+        //4.解析出用户id
+        List<Long> ids = commonFollow.stream().map(Long::valueOf).collect(Collectors.toList());
+
+        //5.查询用户
+        List<UserDTO> users = userService.listByIds(ids)
+                .stream()
+                .map(user -> BeanUtil.copyProperties(user, UserDTO.class))
+                .collect(Collectors.toList());
+
+        return Result.ok(users);
+    }
+
 }
