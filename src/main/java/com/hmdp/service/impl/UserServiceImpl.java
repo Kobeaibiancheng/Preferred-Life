@@ -13,12 +13,14 @@ import com.hmdp.mapper.UserMapper;
 import com.hmdp.service.IUserService;
 import com.hmdp.utils.RedisConstants;
 import com.hmdp.utils.RegexUtils;
+import com.hmdp.utils.UserHolder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.security.reactive.ReactiveSecurityAutoConfiguration;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 import java.util.HashMap;
@@ -132,6 +134,24 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         //7.返回token
         return Result.ok(token);
     }
+
+    @Override
+    public Result logout(HttpServletRequest request) {
+        //token会存放在请求头中，从请求头中获取token
+        String token = request.getHeader("Authorization");
+        //判断token是否存在
+
+        if (token == null || token.isEmpty()) {
+            //不存在
+            return Result.fail("未登录！");
+        }
+        //存在
+        String key = LOGIN_USER_KEY + token;
+        stringRedisTemplate.delete(key);
+        return Result.ok();
+
+    }
+
 
     private User createUserWithPhone(String phone) {
         //1.创建用户
