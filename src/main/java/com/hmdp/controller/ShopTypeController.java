@@ -2,6 +2,7 @@ package com.hmdp.controller;
 
 
 import com.hmdp.dto.Result;
+
 import com.hmdp.entity.ShopType;
 import com.hmdp.service.IShopTypeService;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,7 +34,15 @@ public class ShopTypeController {
          */
         List<ShopType> typeList = typeService
                 .query().orderByAsc("sort").list();
+        /*List<AreaType> typeList = typeService
+                .query().list();*/
         return Result.ok(typeList);
+
+
+
+        //TODO 查询类型，更改数据库内容为，陕西，四川，新疆，西藏，云南，山西，河南，
+
+
 
         /**
          * 添加redis缓存  list

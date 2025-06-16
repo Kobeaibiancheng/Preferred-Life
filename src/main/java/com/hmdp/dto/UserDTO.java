@@ -7,4 +7,5 @@ public class UserDTO {
     private Long id;
     private String nickName;
     private String icon;
+    private Long level;//徒步等级
 }

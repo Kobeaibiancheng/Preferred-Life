@@ -52,6 +52,20 @@ public class User implements Serializable {
      */
     private String icon = "";
 
+    /**
+     * 用户等级
+     * @return
+     */
+    private Long level;
+
+    public Long getLevel() {
+        return level;
+    }
+
+    public void setLevel(Long level) {
+        this.level = level;
+    }
+
     public String getIcon() {
         return icon;
     }
