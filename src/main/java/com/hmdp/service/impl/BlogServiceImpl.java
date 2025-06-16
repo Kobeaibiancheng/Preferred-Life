@@ -58,6 +58,7 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements IB
         // 将用户信息写入该bolg对象
         blog.setName(user.getNickName());
         blog.setIcon(user.getIcon());
+        blog.setLevel(user.getLevel());
 
 
         return Result.ok(blog);

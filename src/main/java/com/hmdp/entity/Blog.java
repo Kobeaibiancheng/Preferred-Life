@@ -92,4 +92,10 @@ public class Blog implements Serializable {
     private LocalDateTime updateTime;
 
 
+    /**
+     * 发布该博文时用户的户外等级
+     */
+    private Long level;
+
+
 }
